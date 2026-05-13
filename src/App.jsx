@@ -3,17 +3,17 @@ import "./App.css";
 
 const defaultServers = [
   "Andrei",
-  "Angela",
+  "Alyssa",
   "Benj",
   "Christine",
   "James",
+  "Toffee",
+  "Server 7",
+  "Server 8",
   "Server 9",
   "Server 10",
   "Server 11",
   "Server 12",
-  "Server 13",
-  "Server 14",
-  "Server 15",
 ];
 
 const STORAGE_KEY = "hale-ohana-celebration-tracker-v4";
