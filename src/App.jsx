@@ -16,7 +16,7 @@ const defaultServers = [
   "Server 15",
 ];
 
-const STORAGE_KEY = "hale-ohana-celebration-tracker-v3";
+const STORAGE_KEY = "hale-ohana-celebration-tracker-v4";
 
 function createServerRow(name) {
   return {
@@ -33,6 +33,9 @@ function createServerRow(name) {
 
     honeymoon: 0,
     honeymoonName: "",
+
+    babymoon: 0,
+    babymoonName: "",
 
     aloha: 0,
     alohaName: "",
@@ -57,6 +60,7 @@ function countTotalRequests(row) {
     Number(row.anniversary || 0) +
     Number(row.retirement || 0) +
     Number(row.honeymoon || 0) +
+    Number(row.babymoon || 0) +
     Number(row.aloha || 0) +
     Number(row.specialCeleb || 0) +
     Number(row.congratulations || 0)
@@ -70,6 +74,7 @@ function hasAnyInput(row) {
     row.anniversaryName ||
     row.retirementName ||
     row.honeymoonName ||
+    row.babymoonName ||
     row.alohaName ||
     row.specialCelebName ||
     row.congratulationsName ||
@@ -90,7 +95,7 @@ function buildSummaryParts(row) {
 
   if (row.birthday > 0) {
     parts.push(
-      `${row.birthday} ${row.birthday === 1 ? "Happy Birthday" : "Happy Birthdays"}${
+      `${row.birthday} Happy Birthday${
         row.birthdayName ? ` (${row.birthdayName})` : ""
       }`
     );
@@ -98,31 +103,39 @@ function buildSummaryParts(row) {
 
   if (row.anniversary > 0) {
     parts.push(
-      `${row.anniversary} ${
-        row.anniversary === 1 ? "Happy Anniversary" : "Happy Anniversaries"
-      }${row.anniversaryName ? ` (${row.anniversaryName})` : ""}`
+      `${row.anniversary} Happy Anniversary${
+        row.anniversaryName ? ` (${row.anniversaryName})` : ""
+      }`
     );
   }
 
   if (row.retirement > 0) {
     parts.push(
-      `${row.retirement} ${
-        row.retirement === 1 ? "Happy Retirement" : "Happy Retirements"
-      }${row.retirementName ? ` (${row.retirementName})` : ""}`
+      `${row.retirement} Happy Retirement${
+        row.retirementName ? ` (${row.retirementName})` : ""
+      }`
     );
   }
 
   if (row.honeymoon > 0) {
     parts.push(
-      `${row.honeymoon} ${
-        row.honeymoon === 1 ? "Happy Honeymoon" : "Happy Honeymoons"
-      }${row.honeymoonName ? ` (${row.honeymoonName})` : ""}`
+      `${row.honeymoon} Happy Honeymoon${
+        row.honeymoonName ? ` (${row.honeymoonName})` : ""
+      }`
+    );
+  }
+
+  if (row.babymoon > 0) {
+    parts.push(
+      `${row.babymoon} Happy Babymoon${
+        row.babymoonName ? ` (${row.babymoonName})` : ""
+      }`
     );
   }
 
   if (row.aloha > 0) {
     parts.push(
-      `${row.aloha} Aloha Ohana${row.aloha > 1 ? "s" : ""}${
+      `${row.aloha} Aloha Ohana${
         row.alohaName ? ` (${row.alohaName})` : ""
       }`
     );
@@ -130,33 +143,29 @@ function buildSummaryParts(row) {
 
   if (row.specialCeleb > 0) {
     parts.push(
-      `${row.specialCeleb} ${
-        row.specialCeleb === 1 ? "Special Celeb" : "Special Celebs"
-      }${row.specialCelebName ? ` (${row.specialCelebName})` : ""}`
+      `${row.specialCeleb} Special Celeb${
+        row.specialCelebName ? ` (${row.specialCelebName})` : ""
+      }`
     );
   }
 
   if (row.congratulations > 0) {
     parts.push(
       `${row.congratulations} Congratulations${
-        row.congratulationsName ? ` (${row.congratulationsName})` : ""
+        row.congratulationsName
+          ? ` (${row.congratulationsName})`
+          : ""
       }`
     );
   }
 
   if (row.lateRequest && row.lateRequestText) {
     parts.push(`Late Request (${row.lateRequestText})`);
-  } else if (row.lateRequest) {
-    parts.push("Late Request");
   }
 
-  if (parts.length === 0) {
-    return `${row.server} - No requests yet`;
-  }
-
-  return `${row.server} - ${countTotalRequests(row)} total request${
-    countTotalRequests(row) !== 1 ? "s" : ""
-  }: ${parts.join(", ")}`;
+  return parts.length > 0
+    ? `${row.server} - ${parts.join(", ")}`
+    : `${row.server} - No requests yet`;
 }
 
 function CategoryBox({
@@ -200,24 +209,30 @@ export default function App() {
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
+
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const upgraded = parsed.map((row, index) => ({
-            ...createServerRow(row.server || defaultServers[index] || `Server ${index + 1}`),
-            ...row,
-          }));
-          setServers(upgraded);
-        }
-      } catch (error) {
-        console.log("Could not load saved data", error);
+
+        const upgraded = parsed.map((row, index) => ({
+          ...createServerRow(
+            row.server || defaultServers[index]
+          ),
+          ...row,
+        }));
+
+        setServers(upgraded);
+      } catch (err) {
+        console.log(err);
       }
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(servers));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(servers)
+    );
   }, [servers]);
 
   const selected = servers[selectedIndex];
@@ -226,7 +241,7 @@ export default function App() {
     const updated = [...servers];
     updated[index][field] = value;
 
-    if (field !== "completed" && updated[index].completed) {
+    if (field !== "completed") {
       updated[index].completed = false;
     }
 
@@ -241,19 +256,24 @@ export default function App() {
   }
 
   function resetAll() {
-    const updated = servers.map((row) => createServerRow(row.server));
-    setServers(updated);
+    setServers(
+      servers.map((s) =>
+        createServerRow(s.server)
+      )
+    );
   }
 
   const totals = servers.reduce(
     (acc, row) => {
-      acc.birthdays += Number(row.birthday || 0);
-      acc.anniversaries += Number(row.anniversary || 0);
-      acc.retirements += Number(row.retirement || 0);
-      acc.honeymoons += Number(row.honeymoon || 0);
-      acc.alohas += Number(row.aloha || 0);
-      acc.specialCelebs += Number(row.specialCeleb || 0);
-      acc.congratulations += Number(row.congratulations || 0);
+      acc.birthdays += Number(row.birthday);
+      acc.anniversaries += Number(row.anniversary);
+      acc.retirements += Number(row.retirement);
+      acc.honeymoons += Number(row.honeymoon);
+      acc.babymoons += Number(row.babymoon);
+      acc.alohas += Number(row.aloha);
+      acc.specialCelebs += Number(row.specialCeleb);
+      acc.congratulations += Number(row.congratulations);
+
       return acc;
     },
     {
@@ -261,6 +281,7 @@ export default function App() {
       anniversaries: 0,
       retirements: 0,
       honeymoons: 0,
+      babymoons: 0,
       alohas: 0,
       specialCelebs: 0,
       congratulations: 0,
@@ -272,6 +293,7 @@ export default function App() {
     totals.anniversaries +
     totals.retirements +
     totals.honeymoons +
+    totals.babymoons +
     totals.alohas +
     totals.specialCelebs +
     totals.congratulations;
@@ -280,9 +302,9 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <h1>Hale Ohana Celebration Tap Board</h1>
+
         <p>
-          Quick celebration tracker for birthdays, anniversaries, retirement,
-          honeymoon, aloha ohana, congratulations, and special requests
+          Quick celebration tracker for service operations
         </p>
       </header>
 
@@ -305,6 +327,11 @@ export default function App() {
         <div className="total-card peach">
           <h3>Happy Honeymoon</h3>
           <p>{totals.honeymoons}</p>
+        </div>
+
+        <div className="total-card peach">
+          <h3>Happy Babymoon</h3>
+          <p>{totals.babymoons}</p>
         </div>
 
         <div className="total-card blue">
@@ -338,22 +365,31 @@ export default function App() {
             return (
               <button
                 key={index}
-                className={selectedIndex === index ? "server-btn active" : "server-btn"}
+                className={
+                  selectedIndex === index
+                    ? "server-btn active"
+                    : "server-btn"
+                }
                 onClick={() => setSelectedIndex(index)}
               >
                 <div className="server-btn-top">
                   <span>{row.server}</span>
-                  <span className={`status-pill ${status}`}>
+
+                  <span
+                    className={`status-pill ${status}`}
+                  >
                     {status === "waiting" && "Waiting"}
-                    {status === "progress" && "In Progress"}
-                    {status === "late" && "Late Request"}
+                    {status === "progress" &&
+                      "In Progress"}
+                    {status === "late" &&
+                      "Late Request"}
                     {status === "done" && "Done"}
                   </span>
                 </div>
 
                 <small>
-                  {countTotalRequests(row)} total request
-                  {countTotalRequests(row) !== 1 ? "s" : ""}
+                  {countTotalRequests(row)} total
+                  requests
                 </small>
               </button>
             );
@@ -364,12 +400,18 @@ export default function App() {
           <div className="editor-header">
             <div>
               <h2>{selected.server}</h2>
+
               <p className="subtext">
-                Yellow means in progress. Orange means late request. Green means done.
+                Yellow means in progress. Orange
+                means late request. Green means
+                done.
               </p>
             </div>
 
-            <button className="reset-btn" onClick={() => resetRow(selectedIndex)}>
+            <button
+              className="reset-btn"
+              onClick={() => resetRow(selectedIndex)}
+            >
               Reset This Row
             </button>
           </div>
@@ -380,10 +422,17 @@ export default function App() {
                 type="checkbox"
                 checked={selected.lateRequest}
                 onChange={(e) =>
-                  updateServer(selectedIndex, "lateRequest", e.target.checked)
+                  updateServer(
+                    selectedIndex,
+                    "lateRequest",
+                    e.target.checked
+                  )
                 }
               />
-              <span>Late Guest / Late Request</span>
+
+              <span>
+                Late Guest / Late Request
+              </span>
             </label>
 
             <label className="checkbox-card done-card">
@@ -391,21 +440,33 @@ export default function App() {
                 type="checkbox"
                 checked={selected.completed}
                 onChange={(e) =>
-                  updateServer(selectedIndex, "completed", e.target.checked)
+                  updateServer(
+                    selectedIndex,
+                    "completed",
+                    e.target.checked
+                  )
                 }
               />
-              <span>Writer Finished / Request Completed</span>
+
+              <span>
+                Writer Finished / Request Completed
+              </span>
             </label>
           </div>
 
           <div className="late-request-box">
             <h3>Late Request Details</h3>
+
             <input
               type="text"
-              placeholder="Example: Guest arrived late, added honeymoon, table 16"
+              placeholder="Guest arrived late, table 16"
               value={selected.lateRequestText}
               onChange={(e) =>
-                updateServer(selectedIndex, "lateRequestText", e.target.value)
+                updateServer(
+                  selectedIndex,
+                  "lateRequestText",
+                  e.target.value
+                )
               }
             />
           </div>
@@ -416,12 +477,20 @@ export default function App() {
               colorClass="yellow"
               value={selected.birthday}
               nameValue={selected.birthdayName}
-              namePlaceholder="Ramon or Happy Birthday Ramon"
+              namePlaceholder="Happy Birthday Ramon"
               onCountChange={(value) =>
-                updateServer(selectedIndex, "birthday", value)
+                updateServer(
+                  selectedIndex,
+                  "birthday",
+                  value
+                )
               }
               onNameChange={(value) =>
-                updateServer(selectedIndex, "birthdayName", value)
+                updateServer(
+                  selectedIndex,
+                  "birthdayName",
+                  value
+                )
               }
             />
 
@@ -432,10 +501,18 @@ export default function App() {
               nameValue={selected.anniversaryName}
               namePlaceholder="Lee Couple"
               onCountChange={(value) =>
-                updateServer(selectedIndex, "anniversary", value)
+                updateServer(
+                  selectedIndex,
+                  "anniversary",
+                  value
+                )
               }
               onNameChange={(value) =>
-                updateServer(selectedIndex, "anniversaryName", value)
+                updateServer(
+                  selectedIndex,
+                  "anniversaryName",
+                  value
+                )
               }
             />
 
@@ -446,10 +523,18 @@ export default function App() {
               nameValue={selected.retirementName}
               namePlaceholder="Mr. Santos"
               onCountChange={(value) =>
-                updateServer(selectedIndex, "retirement", value)
+                updateServer(
+                  selectedIndex,
+                  "retirement",
+                  value
+                )
               }
               onNameChange={(value) =>
-                updateServer(selectedIndex, "retirementName", value)
+                updateServer(
+                  selectedIndex,
+                  "retirementName",
+                  value
+                )
               }
             />
 
@@ -460,10 +545,40 @@ export default function App() {
               nameValue={selected.honeymoonName}
               namePlaceholder="Smith Couple"
               onCountChange={(value) =>
-                updateServer(selectedIndex, "honeymoon", value)
+                updateServer(
+                  selectedIndex,
+                  "honeymoon",
+                  value
+                )
               }
               onNameChange={(value) =>
-                updateServer(selectedIndex, "honeymoonName", value)
+                updateServer(
+                  selectedIndex,
+                  "honeymoonName",
+                  value
+                )
+              }
+            />
+
+            <CategoryBox
+              title="Happy Babymoon"
+              colorClass="peach"
+              value={selected.babymoon}
+              nameValue={selected.babymoonName}
+              namePlaceholder="Garcia Family"
+              onCountChange={(value) =>
+                updateServer(
+                  selectedIndex,
+                  "babymoon",
+                  value
+                )
+              }
+              onNameChange={(value) =>
+                updateServer(
+                  selectedIndex,
+                  "babymoonName",
+                  value
+                )
               }
             />
 
@@ -474,10 +589,18 @@ export default function App() {
               nameValue={selected.alohaName}
               namePlaceholder="Sanchez Ohana"
               onCountChange={(value) =>
-                updateServer(selectedIndex, "aloha", value)
+                updateServer(
+                  selectedIndex,
+                  "aloha",
+                  value
+                )
               }
               onNameChange={(value) =>
-                updateServer(selectedIndex, "alohaName", value)
+                updateServer(
+                  selectedIndex,
+                  "alohaName",
+                  value
+                )
               }
             />
 
@@ -486,12 +609,20 @@ export default function App() {
               colorClass="gray"
               value={selected.specialCeleb}
               nameValue={selected.specialCelebName}
-              namePlaceholder="Reunion, VIP, special moment, etc."
+              namePlaceholder="VIP, reunion, etc."
               onCountChange={(value) =>
-                updateServer(selectedIndex, "specialCeleb", value)
+                updateServer(
+                  selectedIndex,
+                  "specialCeleb",
+                  value
+                )
               }
               onNameChange={(value) =>
-                updateServer(selectedIndex, "specialCelebName", value)
+                updateServer(
+                  selectedIndex,
+                  "specialCelebName",
+                  value
+                )
               }
             />
 
@@ -500,30 +631,53 @@ export default function App() {
               colorClass="green"
               value={selected.congratulations}
               nameValue={selected.congratulationsName}
-              namePlaceholder="Promotion, graduation, engagement, etc."
+              namePlaceholder="Promotion, graduation, engagement"
               onCountChange={(value) =>
-                updateServer(selectedIndex, "congratulations", value)
+                updateServer(
+                  selectedIndex,
+                  "congratulations",
+                  value
+                )
               }
               onNameChange={(value) =>
-                updateServer(selectedIndex, "congratulationsName", value)
+                updateServer(
+                  selectedIndex,
+                  "congratulationsName",
+                  value
+                )
               }
             />
           </div>
 
           <div className="notes-box">
             <h3>Notes</h3>
+
             <input
               type="text"
-              placeholder="VIP, table number, extra instruction, special timing"
+              placeholder="VIP, table number, timing"
               value={selected.notes}
-              onChange={(e) => updateServer(selectedIndex, "notes", e.target.value)}
+              onChange={(e) =>
+                updateServer(
+                  selectedIndex,
+                  "notes",
+                  e.target.value
+                )
+              }
             />
           </div>
 
-          <div className={`summary-box ${getStatus(selected)}`}>
+          <div
+            className={`summary-box ${getStatus(
+              selected
+            )}`}
+          >
             <h3>Live Summary</h3>
+
             <p>{buildSummaryParts(selected)}</p>
-            {selected.notes && <small>Notes: {selected.notes}</small>}
+
+            {selected.notes && (
+              <small>Notes: {selected.notes}</small>
+            )}
           </div>
         </section>
       </main>
@@ -531,27 +685,47 @@ export default function App() {
       <section className="summary-board">
         <div className="summary-header">
           <h2>All Server Summaries</h2>
-          <button className="reset-btn danger" onClick={resetAll}>
+
+          <button
+            className="reset-btn danger"
+            onClick={resetAll}
+          >
             Reset All
           </button>
         </div>
 
         <div className="summary-grid">
           {servers.map((row, index) => (
-            <div key={index} className="summary-card">
+            <div
+              key={index}
+              className="summary-card"
+            >
               <div className="summary-card-top">
                 <h3>{row.server}</h3>
-                <span className={`status-pill ${getStatus(row)}`}>
-                  {getStatus(row) === "waiting" && "Waiting"}
-                  {getStatus(row) === "progress" && "In Progress"}
-                  {getStatus(row) === "late" && "Late Request"}
+
+                <span
+                  className={`status-pill ${getStatus(
+                    row
+                  )}`}
+                >
+                  {getStatus(row) === "waiting" &&
+                    "Waiting"}
+
+                  {getStatus(row) === "progress" &&
+                    "In Progress"}
+
+                  {getStatus(row) === "late" &&
+                    "Late Request"}
+
                   {getStatus(row) === "done" && "Done"}
                 </span>
               </div>
 
               <p>{buildSummaryParts(row)}</p>
 
-              {row.notes && <small>Notes: {row.notes}</small>}
+              {row.notes && (
+                <small>Notes: {row.notes}</small>
+              )}
             </div>
           ))}
         </div>
