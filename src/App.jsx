@@ -16,7 +16,7 @@ const defaultServers = [
   "Server 15",
 ];
 
-const STORAGE_KEY = "hale-ohana-celebration-tracker-v2";
+const STORAGE_KEY = "hale-ohana-celebration-tracker-v3";
 
 function createServerRow(name) {
   return {
@@ -40,6 +40,9 @@ function createServerRow(name) {
     specialCeleb: 0,
     specialCelebName: "",
 
+    congratulations: 0,
+    congratulationsName: "",
+
     lateRequest: false,
     lateRequestText: "",
 
@@ -55,7 +58,8 @@ function countTotalRequests(row) {
     Number(row.retirement || 0) +
     Number(row.honeymoon || 0) +
     Number(row.aloha || 0) +
-    Number(row.specialCeleb || 0)
+    Number(row.specialCeleb || 0) +
+    Number(row.congratulations || 0)
   );
 }
 
@@ -68,6 +72,7 @@ function hasAnyInput(row) {
     row.honeymoonName ||
     row.alohaName ||
     row.specialCelebName ||
+    row.congratulationsName ||
     row.lateRequestText ||
     row.notes
   );
@@ -85,43 +90,57 @@ function buildSummaryParts(row) {
 
   if (row.birthday > 0) {
     parts.push(
-      `${row.birthday} ${row.birthday === 1 ? "Birthday" : "Birthdays"}${row.birthdayName ? ` (${row.birthdayName})` : ""
+      `${row.birthday} ${row.birthday === 1 ? "Happy Birthday" : "Happy Birthdays"}${
+        row.birthdayName ? ` (${row.birthdayName})` : ""
       }`
     );
   }
 
   if (row.anniversary > 0) {
     parts.push(
-      `${row.anniversary} ${row.anniversary === 1 ? "Anniversary" : "Anniversaries"
+      `${row.anniversary} ${
+        row.anniversary === 1 ? "Happy Anniversary" : "Happy Anniversaries"
       }${row.anniversaryName ? ` (${row.anniversaryName})` : ""}`
     );
   }
 
   if (row.retirement > 0) {
     parts.push(
-      `${row.retirement} ${row.retirement === 1 ? "Retirement" : "Retirements"}${row.retirementName ? ` (${row.retirementName})` : ""
-      }`
+      `${row.retirement} ${
+        row.retirement === 1 ? "Happy Retirement" : "Happy Retirements"
+      }${row.retirementName ? ` (${row.retirementName})` : ""}`
     );
   }
 
   if (row.honeymoon > 0) {
     parts.push(
-      `${row.honeymoon} ${row.honeymoon === 1 ? "Honeymoon" : "Honeymoons"}${row.honeymoonName ? ` (${row.honeymoonName})` : ""
-      }`
+      `${row.honeymoon} ${
+        row.honeymoon === 1 ? "Happy Honeymoon" : "Happy Honeymoons"
+      }${row.honeymoonName ? ` (${row.honeymoonName})` : ""}`
     );
   }
 
   if (row.aloha > 0) {
     parts.push(
-      `${row.aloha} Aloha${row.aloha > 1 ? "s" : ""}${row.alohaName ? ` (${row.alohaName})` : ""
+      `${row.aloha} Aloha Ohana${row.aloha > 1 ? "s" : ""}${
+        row.alohaName ? ` (${row.alohaName})` : ""
       }`
     );
   }
 
   if (row.specialCeleb > 0) {
     parts.push(
-      `${row.specialCeleb} ${row.specialCeleb === 1 ? "Special Celeb" : "Special Celebs"
+      `${row.specialCeleb} ${
+        row.specialCeleb === 1 ? "Special Celeb" : "Special Celebs"
       }${row.specialCelebName ? ` (${row.specialCelebName})` : ""}`
+    );
+  }
+
+  if (row.congratulations > 0) {
+    parts.push(
+      `${row.congratulations} Congratulations${
+        row.congratulationsName ? ` (${row.congratulationsName})` : ""
+      }`
     );
   }
 
@@ -135,8 +154,9 @@ function buildSummaryParts(row) {
     return `${row.server} - No requests yet`;
   }
 
-  return `${row.server} - ${countTotalRequests(row)} total request${countTotalRequests(row) !== 1 ? "s" : ""
-    }: ${parts.join(", ")}`;
+  return `${row.server} - ${countTotalRequests(row)} total request${
+    countTotalRequests(row) !== 1 ? "s" : ""
+  }: ${parts.join(", ")}`;
 }
 
 function CategoryBox({
@@ -184,7 +204,11 @@ export default function App() {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setServers(parsed);
+          const upgraded = parsed.map((row, index) => ({
+            ...createServerRow(row.server || defaultServers[index] || `Server ${index + 1}`),
+            ...row,
+          }));
+          setServers(upgraded);
         }
       } catch (error) {
         console.log("Could not load saved data", error);
@@ -223,12 +247,13 @@ export default function App() {
 
   const totals = servers.reduce(
     (acc, row) => {
-      acc.birthdays += Number(row.birthday);
-      acc.anniversaries += Number(row.anniversary);
-      acc.retirements += Number(row.retirement);
-      acc.honeymoons += Number(row.honeymoon);
-      acc.alohas += Number(row.aloha);
-      acc.specialCelebs += Number(row.specialCeleb);
+      acc.birthdays += Number(row.birthday || 0);
+      acc.anniversaries += Number(row.anniversary || 0);
+      acc.retirements += Number(row.retirement || 0);
+      acc.honeymoons += Number(row.honeymoon || 0);
+      acc.alohas += Number(row.aloha || 0);
+      acc.specialCelebs += Number(row.specialCeleb || 0);
+      acc.congratulations += Number(row.congratulations || 0);
       return acc;
     },
     {
@@ -238,6 +263,7 @@ export default function App() {
       honeymoons: 0,
       alohas: 0,
       specialCelebs: 0,
+      congratulations: 0,
     }
   );
 
@@ -247,44 +273,53 @@ export default function App() {
     totals.retirements +
     totals.honeymoons +
     totals.alohas +
-    totals.specialCelebs;
+    totals.specialCelebs +
+    totals.congratulations;
 
   return (
     <div className="app">
       <header className="topbar">
         <h1>Hale Ohana Celebration Tap Board</h1>
-        <p>Quick celebration tracker for birthdays, anniversaries, retirement, honeymoon, aloha, and special requests</p>
+        <p>
+          Quick celebration tracker for birthdays, anniversaries, retirement,
+          honeymoon, aloha ohana, congratulations, and special requests
+        </p>
       </header>
 
       <section className="totals">
         <div className="total-card yellow">
-          <h3>Birthdays</h3>
+          <h3>Happy Birthday</h3>
           <p>{totals.birthdays}</p>
         </div>
 
         <div className="total-card pink">
-          <h3>Anniversaries</h3>
+          <h3>Happy Anniversary</h3>
           <p>{totals.anniversaries}</p>
         </div>
 
         <div className="total-card purple">
-          <h3>Retirement</h3>
+          <h3>Happy Retirement</h3>
           <p>{totals.retirements}</p>
         </div>
 
         <div className="total-card peach">
-          <h3>Honeymoon</h3>
+          <h3>Happy Honeymoon</h3>
           <p>{totals.honeymoons}</p>
         </div>
 
         <div className="total-card blue">
-          <h3>Aloha</h3>
+          <h3>Aloha Ohana</h3>
           <p>{totals.alohas}</p>
         </div>
 
         <div className="total-card gray">
           <h3>Special Celeb</h3>
           <p>{totals.specialCelebs}</p>
+        </div>
+
+        <div className="total-card green">
+          <h3>Congratulations</h3>
+          <p>{totals.congratulations}</p>
         </div>
 
         <div className="total-card green">
@@ -316,7 +351,10 @@ export default function App() {
                   </span>
                 </div>
 
-                <small>{countTotalRequests(row)} total request{countTotalRequests(row) !== 1 ? "s" : ""}</small>
+                <small>
+                  {countTotalRequests(row)} total request
+                  {countTotalRequests(row) !== 1 ? "s" : ""}
+                </small>
               </button>
             );
           })}
@@ -434,7 +472,7 @@ export default function App() {
               colorClass="blue"
               value={selected.aloha}
               nameValue={selected.alohaName}
-              namePlaceholder="Sanchez Family"
+              namePlaceholder="Sanchez Ohana"
               onCountChange={(value) =>
                 updateServer(selectedIndex, "aloha", value)
               }
@@ -448,27 +486,27 @@ export default function App() {
               colorClass="gray"
               value={selected.specialCeleb}
               nameValue={selected.specialCelebName}
-              namePlaceholder="Graduation, reunion, promotion, etc."
+              namePlaceholder="Reunion, VIP, special moment, etc."
               onCountChange={(value) =>
                 updateServer(selectedIndex, "specialCeleb", value)
               }
               onNameChange={(value) =>
                 updateServer(selectedIndex, "specialCelebName", value)
               }
-
             />
+
             <CategoryBox
               title="Congratulations"
-              color="#d4f4dd"
-              value={selectedServerData.congratulations}
-              onChange={(val) =>
-                updateServerData(selectedServer, "congratulations", val)
-              }
-              names={selectedServerData.congratulationsNames}
-              onNamesChange={(val) =>
-                updateServerData(selectedServer, "congratulationsNames", val)
-              }
+              colorClass="green"
+              value={selected.congratulations}
+              nameValue={selected.congratulationsName}
               namePlaceholder="Promotion, graduation, engagement, etc."
+              onCountChange={(value) =>
+                updateServer(selectedIndex, "congratulations", value)
+              }
+              onNameChange={(value) =>
+                updateServer(selectedIndex, "congratulationsName", value)
+              }
             />
           </div>
 
