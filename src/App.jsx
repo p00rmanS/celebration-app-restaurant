@@ -3,17 +3,17 @@ import "./App.css";
 
 const defaultServers = [
   "Andrei",
-  "Alyssa",
   "Angela",
   "Benj",
   "Christine",
-  "Dallin",
-  "JV",
   "James",
   "Server 9",
   "Server 10",
   "Server 11",
   "Server 12",
+  "Server 13",
+  "Server 14",
+  "Server 15",
 ];
 
 const STORAGE_KEY = "hale-ohana-celebration-tracker-v2";
@@ -85,48 +85,42 @@ function buildSummaryParts(row) {
 
   if (row.birthday > 0) {
     parts.push(
-      `${row.birthday} ${row.birthday === 1 ? "Birthday" : "Birthdays"}${
-        row.birthdayName ? ` (${row.birthdayName})` : ""
+      `${row.birthday} ${row.birthday === 1 ? "Birthday" : "Birthdays"}${row.birthdayName ? ` (${row.birthdayName})` : ""
       }`
     );
   }
 
   if (row.anniversary > 0) {
     parts.push(
-      `${row.anniversary} ${
-        row.anniversary === 1 ? "Anniversary" : "Anniversaries"
+      `${row.anniversary} ${row.anniversary === 1 ? "Anniversary" : "Anniversaries"
       }${row.anniversaryName ? ` (${row.anniversaryName})` : ""}`
     );
   }
 
   if (row.retirement > 0) {
     parts.push(
-      `${row.retirement} ${row.retirement === 1 ? "Retirement" : "Retirements"}${
-        row.retirementName ? ` (${row.retirementName})` : ""
+      `${row.retirement} ${row.retirement === 1 ? "Retirement" : "Retirements"}${row.retirementName ? ` (${row.retirementName})` : ""
       }`
     );
   }
 
   if (row.honeymoon > 0) {
     parts.push(
-      `${row.honeymoon} ${row.honeymoon === 1 ? "Honeymoon" : "Honeymoons"}${
-        row.honeymoonName ? ` (${row.honeymoonName})` : ""
+      `${row.honeymoon} ${row.honeymoon === 1 ? "Honeymoon" : "Honeymoons"}${row.honeymoonName ? ` (${row.honeymoonName})` : ""
       }`
     );
   }
 
   if (row.aloha > 0) {
     parts.push(
-      `${row.aloha} Aloha${row.aloha > 1 ? "s" : ""}${
-        row.alohaName ? ` (${row.alohaName})` : ""
+      `${row.aloha} Aloha${row.aloha > 1 ? "s" : ""}${row.alohaName ? ` (${row.alohaName})` : ""
       }`
     );
   }
 
   if (row.specialCeleb > 0) {
     parts.push(
-      `${row.specialCeleb} ${
-        row.specialCeleb === 1 ? "Special Celeb" : "Special Celebs"
+      `${row.specialCeleb} ${row.specialCeleb === 1 ? "Special Celeb" : "Special Celebs"
       }${row.specialCelebName ? ` (${row.specialCelebName})` : ""}`
     );
   }
@@ -141,9 +135,8 @@ function buildSummaryParts(row) {
     return `${row.server} - No requests yet`;
   }
 
-  return `${row.server} - ${countTotalRequests(row)} total request${
-    countTotalRequests(row) !== 1 ? "s" : ""
-  }: ${parts.join(", ")}`;
+  return `${row.server} - ${countTotalRequests(row)} total request${countTotalRequests(row) !== 1 ? "s" : ""
+    }: ${parts.join(", ")}`;
 }
 
 function CategoryBox({
@@ -381,7 +374,7 @@ export default function App() {
 
           <div className="grid">
             <CategoryBox
-              title="Birthday"
+              title="Happy Birthday"
               colorClass="yellow"
               value={selected.birthday}
               nameValue={selected.birthdayName}
@@ -395,7 +388,7 @@ export default function App() {
             />
 
             <CategoryBox
-              title="Anniversary"
+              title="Happy Anniversary"
               colorClass="pink"
               value={selected.anniversary}
               nameValue={selected.anniversaryName}
@@ -409,7 +402,7 @@ export default function App() {
             />
 
             <CategoryBox
-              title="Retirement"
+              title="Happy Retirement"
               colorClass="purple"
               value={selected.retirement}
               nameValue={selected.retirementName}
@@ -423,7 +416,7 @@ export default function App() {
             />
 
             <CategoryBox
-              title="Honeymoon"
+              title="Happy Honeymoon"
               colorClass="peach"
               value={selected.honeymoon}
               nameValue={selected.honeymoonName}
@@ -437,7 +430,7 @@ export default function App() {
             />
 
             <CategoryBox
-              title="Aloha"
+              title="Aloha Ohana"
               colorClass="blue"
               value={selected.aloha}
               nameValue={selected.alohaName}
@@ -462,6 +455,20 @@ export default function App() {
               onNameChange={(value) =>
                 updateServer(selectedIndex, "specialCelebName", value)
               }
+
+            />
+            <CategoryBox
+              title="Congratulations"
+              color="#d4f4dd"
+              value={selectedServerData.congratulations}
+              onChange={(val) =>
+                updateServerData(selectedServer, "congratulations", val)
+              }
+              names={selectedServerData.congratulationsNames}
+              onNamesChange={(val) =>
+                updateServerData(selectedServer, "congratulationsNames", val)
+              }
+              namePlaceholder="Promotion, graduation, engagement, etc."
             />
           </div>
 
